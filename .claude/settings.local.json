@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmd /c \"python --version & node --version\")",
+      "Bash(cmd /c \"python --version 2>&1 & echo NODE: & node --version 2>&1\")",
+      "Bash(powershell -Command \"python --version; node --version\")",
+      "Bash(powershell -Command \"try { $p = python --version 2>&1; Write-Host ''Python:'' $p } catch { Write-Host ''Python: 없음'' }; try { $n = node --version 2>&1; Write-Host ''Node:'' $n } catch { Write-Host ''Node: 없음'' }\")",
+      "Bash(powershell -Command \"Get-Command python -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source; Get-Command node -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source\")",
+      "Bash(powershell -Command \"& ''python'' --version 2>&1\")",
+      "Bash(powershell -Command \"Get-NetTCPConnection -LocalPort 8000 -ErrorAction SilentlyContinue | Select-Object State; Get-NetTCPConnection -LocalPort 5173 -ErrorAction SilentlyContinue | Select-Object State\")",
+      "Bash(powershell -Command \"Get-NetTCPConnection -LocalPort 8000 -ErrorAction SilentlyContinue | Select-Object LocalPort, State; Get-NetTCPConnection -LocalPort 5173 -ErrorAction SilentlyContinue | Select-Object LocalPort, State\")",
+      "Bash(powershell -Command \"Invoke-WebRequest -Uri ''http://localhost:8000/docs'' -UseBasicParsing | Select-Object -ExpandProperty StatusCode\")",
+      "Bash(timeout /t 8 /nobreak)"
+    ]
+  }
+}
