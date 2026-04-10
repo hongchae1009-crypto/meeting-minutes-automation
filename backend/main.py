@@ -112,6 +112,8 @@ async def process(req: ProcessRequest):
     except HTTPException:
         raise
     except Exception as e:
+        import traceback
+        print(f"[ERROR /api/process] {traceback.format_exc()}", flush=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
