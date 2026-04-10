@@ -110,7 +110,8 @@ def _call_gemini(transcript_text: str, meeting_date: str) -> str:
         "generationConfig": {"temperature": 0.2},
     }
     resp = requests.post(url, json=payload, timeout=60)
-    resp.raise_for_status()
+    if not resp.ok:
+        raise ValueError(f"Gemini API error {resp.status_code}: {resp.text}")
     data = resp.json()
     return data["candidates"][0]["content"]["parts"][0]["text"]
 
