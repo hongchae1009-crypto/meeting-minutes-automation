@@ -104,7 +104,7 @@ def _call_gemini(transcript_text: str, meeting_date: str) -> str:
 {transcript_text}
 
 반드시 유효한 JSON만 출력하세요."""
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
     payload = {
         "contents": [{"parts": [{"text": SYSTEM_PROMPT + "\n\n" + prompt}]}],
         "generationConfig": {"temperature": 0.2},
