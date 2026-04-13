@@ -107,9 +107,12 @@ def _call_gemini(transcript_text: str, meeting_date: str) -> str:
     url = f"https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key={api_key}"
     payload = {
         "contents": [{"parts": [{"text": SYSTEM_PROMPT + "\n\n" + prompt}]}],
-        "generationConfig": {"temperature": 0.2},
+        "generationConfig": {
+            "temperature": 0.2,
+            "thinkingConfig": {"thinkingBudget": 0},
+        },
     }
-    resp = requests.post(url, json=payload, timeout=60)
+    resp = requests.post(url, json=payload, timeout=120)
     if not resp.ok:
         raise ValueError(f"Gemini API error {resp.status_code}: {resp.text}")
     data = resp.json()
