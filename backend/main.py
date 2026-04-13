@@ -240,6 +240,15 @@ async def publish(req: PublishRequest):
     }
 
 
+@app.get("/api/gemini-models")
+async def gemini_models():
+    """사용 가능한 Gemini 모델 목록 반환 (디버그용)"""
+    import requests
+    api_key = os.environ.get("GEMINI_API_KEY", "")
+    resp = requests.get(f"https://generativelanguage.googleapis.com/v1/models?key={api_key}")
+    return resp.json()
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
