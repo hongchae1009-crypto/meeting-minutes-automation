@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react'
 import { processTranscript } from '../api/client'
 import type { ActionItem, MeetingMinutes, WizardState } from '../types'
+import {
+  copyMarkdownToClipboard,
+  downloadJson,
+  downloadMarkdown,
+} from '../utils/exportMinutes'
 
 interface Props {
   state: WizardState
@@ -13,6 +18,19 @@ export default function StepPreview({ state, setState, onNext, onBack }: Props) 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [showReview, setShowReview] = useState(false)
+  const [copyMsg, setCopyMsg] = useState('')
+
+  async function handleCopy() {
+    if (!state.minutes) return
+    try {
+      await copyMarkdownToClipboard(state.minutes, state.meetingDate, state.attendees)
+      setCopyMsg('✓ 복사 완료')
+      setTimeout(() => setCopyMsg(''), 2000)
+    } catch {
+      setCopyMsg('✕ 복사 실패')
+      setTimeout(() => setCopyMsg(''), 2000)
+    }
+  }
 
   useEffect(() => {
     if (!state.minutes) {
@@ -236,6 +254,33 @@ export default function StepPreview({ state, setState, onNext, onBack }: Props) 
           )}
         </section>
       )}
+
+      {/* 내보내기 (Atlassian 계정 없이도 결과를 가져갈 수 있도록) */}
+      <section className="preview-section export-section">
+        <h3>💾 내보내기</h3>
+        <p className="export-help">
+          Confluence/Jira에 게시하지 않고도 회의록을 가져갈 수 있습니다.
+        </p>
+        <div className="export-btn-row">
+          <button className="btn-export" onClick={handleCopy} disabled={!state.minutes}>
+            📋 마크다운 복사 {copyMsg && <span className="copy-msg">{copyMsg}</span>}
+          </button>
+          <button
+            className="btn-export"
+            onClick={() => state.minutes && downloadMarkdown(state.minutes, state.meetingDate, state.attendees)}
+            disabled={!state.minutes}
+          >
+            ⬇ Markdown (.md)
+          </button>
+          <button
+            className="btn-export"
+            onClick={() => state.minutes && downloadJson(state.minutes, state.meetingDate, state.attendees)}
+            disabled={!state.minutes}
+          >
+            ⬇ JSON (.json)
+          </button>
+        </div>
+      </section>
 
       <div className="btn-row">
         <button className="btn-secondary" onClick={onBack}>← 이전</button>

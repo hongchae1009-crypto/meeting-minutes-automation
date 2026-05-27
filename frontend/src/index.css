@@ -225,3 +225,17 @@ body { background: var(--bg); color: var(--text); min-height: 100vh; }
   text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,.2);
 }
 .overlay-box p { margin-top: 8px; font-size: 0.95rem; }
+
+/* ── Export 섹션 ── */
+.export-section { border: 1px dashed #cbd5e1; background: #f8fafc; }
+.export-help { color: #64748b; font-size: 0.85rem; margin: 0 0 12px 0; }
+.export-btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn-export {
+  background: #fff; color: #1e293b; border: 1px solid #cbd5e1;
+  padding: 8px 14px; border-radius: 6px; font-size: 0.875rem;
+  cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+  transition: all .15s;
+}
+.btn-export:hover:not(:disabled) { background: #f1f5f9; border-color: #94a3b8; }
+.btn-export:disabled { opacity: 0.5; cursor: not-allowed; }
+.copy-msg { color: #16a34a; font-size: 0.8rem; margin-left: 4px; }
