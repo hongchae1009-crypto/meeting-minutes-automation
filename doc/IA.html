@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>IA — 정보 구조</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root {
+  --fg: #0f172a; --muted: #64748b; --border: #e2e8f0; --bg: #ffffff;
+  --code-bg: #f8fafc; --primary: #2563eb; --accent: #f1f5f9;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 0; background: var(--bg); color: var(--fg);
+  font-family: -apple-system, "Segoe UI", "Noto Sans KR", sans-serif;
+  line-height: 1.65; font-size: 16px;
+}
+.container { max-width: 880px; margin: 0 auto; padding: 48px 24px 80px; }
+header.docnav {
+  background: var(--accent); border-bottom: 1px solid var(--border);
+  padding: 12px 24px; display: flex; gap: 16px; align-items: center;
+  font-size: 0.9rem;
+}
+header.docnav a { color: var(--primary); text-decoration: none; }
+header.docnav a:hover { text-decoration: underline; }
+header.docnav strong { color: var(--fg); }
+h1 { font-size: 2rem; margin: 0 0 8px; border-bottom: 2px solid var(--border); padding-bottom: 12px; }
+h2 { font-size: 1.45rem; margin: 40px 0 12px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+h3 { font-size: 1.1rem; margin: 28px 0 8px; }
+h4 { font-size: 1rem; margin: 20px 0 6px; }
+p { margin: 8px 0; }
+ul, ol { padding-left: 24px; }
+li { margin: 4px 0; }
+hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+pre {
+  background: var(--code-bg); padding: 14px 16px; border-radius: 8px;
+  overflow-x: auto; border: 1px solid var(--border);
+}
+pre code { background: transparent; padding: 0; }
+blockquote {
+  border-left: 4px solid var(--primary); padding: 4px 16px;
+  background: var(--accent); margin: 12px 0; color: var(--muted);
+}
+table {
+  border-collapse: collapse; width: 100%; margin: 12px 0;
+  font-size: 0.95em;
+}
+th, td {
+  border: 1px solid var(--border); padding: 8px 12px; text-align: left;
+  vertical-align: top;
+}
+th { background: var(--accent); font-weight: 600; }
+a { color: var(--primary); }
+.mermaid {
+  background: #fff; border: 1px solid var(--border); border-radius: 8px;
+  padding: 16px; margin: 16px 0; text-align: center;
+}
+.meta { color: var(--muted); font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<header class="docnav">
+  <strong>📚 meeting-minutes-automation / doc</strong>
+  <a href="index.html">목차</a>
+  <a href="PRD.html">PRD</a>
+  <a href="IA.html">IA</a>
+  <a href="ERD.html">ERD</a>
+</header>
+<div class="container">
+<h1 id="ia-ai">IA — AI 회의록 자동화</h1>
+<p><strong>문서 버전</strong>: v1.1 (2026-06-19)
+정보 구조 · 화면 흐름 · 컴포넌트 트리</p>
+<hr />
+<h2 id="1">1. 사이트맵</h2>
+<p>이 앱은 단일 페이지(SPA) 마법사 구조다. URL이 바뀌지 않고, 내부 단계(Step)로 화면을 전환한다.</p>
+<pre><code>/  (메인 마법사)
+├── Step 1  파일 업로드
+├── Step 2  화자 매핑
+├── Step 3  회의록 미리보기·편집
+│             └── (내보내기 패널: 마크다운 복사 / .md / .json)
+├── Step 4  게시 설정 (Atlassian)
+└── Step 5  게시 완료
+</code></pre>
+<p>외부로 나가는 링크:
+- Confluence 페이지 (게시 후)
+- Jira 이슈 (게시 후)</p>
+<hr />
+<h2 id="2">2. 사용자 플로우</h2>
+<div class="mermaid">flowchart TD
+    A[Step 1: .txt 업로드] --> B[backend /api/parse]
+    B --> C[Step 2: 화자 매핑·회의일·참석자]
+    C --> D[Step 3: AI 처리 호출]
+    D --> E[backend /api/process<br/>Gemini 2.5 Flash]
+    E --> F[Step 3: 미리보기·편집]
+    F -->|내보내기| G[Markdown 복사 / .md / .json 다운로드]
+    F -->|게시| H[Step 4: Atlassian 인증·옵션]
+    H --> I[backend /api/publish]
+    I --> J[Step 5: Confluence/Jira 링크]
+    G -.->|끝| End[(사용자가 다른 도구로 옮김)]
+    J -.->|끝| End</div>
+<hr />
+<h2 id="3">3. 화면별 정보 요소</h2>
+<h3 id="step-1">Step 1 — 파일 업로드</h3>
+<table>
+<thead>
+<tr>
+<th>영역</th>
+<th>요소</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>헤더</td>
+<td>진행 표시(1/5)</td>
+</tr>
+<tr>
+<td>본문</td>
+<td>드래그&amp;드롭 영역, 파일 선택 버튼, 지원 형식 안내</td>
+</tr>
+<tr>
+<td>상태</td>
+<td>업로드 중 스피너, 오류 메시지</td>
+</tr>
+<tr>
+<td>액션</td>
+<td><strong>다음</strong> (파일 파싱 후 활성화)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="step-2">Step 2 — 화자 매핑</h3>
+<table>
+<thead>
+<tr>
+<th>영역</th>
+<th>요소</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>본문</td>
+<td>화자 ID → 실명 입력 필드 (N개), 회의 일자, 참석자, 전사 미리보기</td>
+</tr>
+<tr>
+<td>액션</td>
+<td><strong>이전 / 다음</strong></td>
+</tr>
+</tbody>
+</table>
+<h3 id="step-3">Step 3 — 미리보기·편집</h3>
+<table>
+<thead>
+<tr>
+<th>영역</th>
+<th>요소</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>헤더</td>
+<td>회의록 제목 (편집 가능), <strong>↺ 재생성</strong></td>
+</tr>
+<tr>
+<td>요약</td>
+<td>AI 생성 한 단락</td>
+</tr>
+<tr>
+<td>주요 논의</td>
+<td>토픽 + 내용 카드</td>
+</tr>
+<tr>
+<td>결정사항</td>
+<td>리스트</td>
+</tr>
+<tr>
+<td>액션 아이템</td>
+<td>테이블 (신뢰도/담당자/업무/기한/시간), 행 추가·삭제·인라인 편집</td>
+</tr>
+<tr>
+<td>검토 필요</td>
+<td>접이식 섹션 (시간/화자/발화/이유)</td>
+</tr>
+<tr>
+<td><strong>내보내기</strong></td>
+<td>마크다운 복사, .md 다운로드, .json 다운로드</td>
+</tr>
+<tr>
+<td>액션</td>
+<td><strong>이전 / 게시 설정</strong></td>
+</tr>
+</tbody>
+</table>
+<h3 id="step-4">Step 4 — 게시 설정</h3>
+<table>
+<thead>
+<tr>
+<th>영역</th>
+<th>요소</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Confluence</td>
+<td>도메인, 이메일, API 토큰, Space 선택(드롭다운), 부모 페이지 ID(선택)</td>
+</tr>
+<tr>
+<td>Jira</td>
+<td>도메인, 이메일, API 토큰, 프로젝트 선택, 이슈 타입, 담당자 매핑(이름→accountId), 기존 이슈 키(선택)</td>
+</tr>
+<tr>
+<td>액션</td>
+<td><strong>이전 / 게시하기</strong> (스피너 동반)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="step-5">Step 5 — 완료</h3>
+<table>
+<thead>
+<tr>
+<th>영역</th>
+<th>요소</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>결과</td>
+<td>🎉 게시 완료 헤더</td>
+</tr>
+<tr>
+<td>Confluence</td>
+<td>페이지 제목 + 외부 링크</td>
+</tr>
+<tr>
+<td>Jira</td>
+<td>생성된 이슈 칩들 (키+요약+링크)</td>
+</tr>
+<tr>
+<td>Jira (댓글)</td>
+<td>댓글 추가된 기존 이슈</td>
+</tr>
+<tr>
+<td>오류</td>
+<td>부분 실패가 있으면 목록 표시</td>
+</tr>
+<tr>
+<td>액션</td>
+<td><strong>새 회의록 작성</strong> (Step 1 초기화)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="4-frontendsrc">4. 컴포넌트 트리 (frontend/src)</h2>
+<pre><code>App.tsx
+├── ProgressBar (1~5 단계 인디케이터)
+├── StepUpload         ─ /api/parse 호출, ParseResult → WizardState.rawText/speakers
+├── StepSpeakerMap     ─ speakerMap, meetingDate, attendees 입력
+├── StepPreview        ─ /api/process 호출, MeetingMinutes 편집
+│   ├── action 편집 테이블
+│   ├── review 접이식
+│   └── ExportPanel    ─ utils/exportMinutes.ts
+├── StepPublish        ─ /api/confluence/spaces, /api/jira/projects, /api/jira/users, /api/publish
+└── StepResult         ─ PublishResult 표시, Reset 트리거
+</code></pre>
+<h3 id="_1">보조 모듈</h3>
+<pre><code>api/client.ts          ─ axios 인스턴스 (baseURL: VITE_API_URL)
+                         parseFile, processTranscript, getConfluenceSpaces,
+                         getJiraProjects, getJiraUsers, publish
+types/index.ts         ─ WizardState, MeetingMinutes, ActionItem, ReviewItem,
+                         AtlassianSpace/Project/User, PublishResult, ParseResult
+utils/exportMinutes.ts ─ minutesToMarkdown, downloadMarkdown, downloadJson,
+                         copyMarkdownToClipboard  (v1.1 신규)
+</code></pre>
+<hr />
+<h2 id="5-wizardstate">5. 상태 (WizardState)</h2>
+<p>전 단계의 상태를 단일 <code>WizardState</code> 객체로 보관하고 단계 컴포넌트에 prop으로 전달한다.</p>
+<table>
+<thead>
+<tr>
+<th>그룹</th>
+<th>필드</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Step 1</td>
+<td><code>rawText</code>, <code>speakers[]</code>, <code>fileName</code></td>
+</tr>
+<tr>
+<td>Step 2</td>
+<td><code>speakerMap{}</code>, <code>meetingDate</code>, <code>attendees</code></td>
+</tr>
+<tr>
+<td>Step 3</td>
+<td><code>minutes: MeetingMinutes \| null</code></td>
+</tr>
+<tr>
+<td>Step 4</td>
+<td><code>confluence{Domain,Email,Token,SpaceKey,ParentId}</code>, <code>jira{Domain,Email,Token,ProjectKey,IssueType,UserMap,existingIssueKeys}</code></td>
+</tr>
+<tr>
+<td>Step 5</td>
+<td><code>publishResult: PublishResult \| null</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="6-api-backend">6. API 인터페이스 (backend)</h2>
+<table>
+<thead>
+<tr>
+<th>메서드</th>
+<th>경로</th>
+<th>용도</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>POST</td>
+<td><code>/api/parse</code></td>
+<td>.txt 업로드 → 화자/미리보기</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/process</code></td>
+<td>rawText + speakerMap → MeetingMinutes</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/confluence/spaces</code></td>
+<td>Confluence Space 목록</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/jira/projects</code></td>
+<td>Jira 프로젝트 목록</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/jira/users</code></td>
+<td>프로젝트별 담당자 후보</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/publish</code></td>
+<td>Confluence 페이지 + Jira 이슈 생성/댓글</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/gemini-models</code></td>
+<td>Gemini 모델 목록 (디버깅용)</td>
+</tr>
+</tbody>
+</table>
+<p>CORS는 <code>*</code> 허용. 인증 토큰은 요청 본문/쿼리스트링으로 매번 전달 (서버 저장 안 함).</p>
+<hr />
+<h2 id="7">7. 네비게이션 정책</h2>
+<ul>
+<li><strong>앞으로 이동</strong>: 현재 단계의 필수 입력이 충족되면 활성화</li>
+<li><strong>뒤로 이동</strong>: 항상 가능, 상태 보존</li>
+<li><strong>재처리</strong>: Step 3의 ↺ 재생성으로 AI 호출 재실행 (state.minutes 덮어쓰기)</li>
+<li><strong>종료</strong>: Step 3 내보내기 또는 Step 5 새 회의록 작성</li>
+</ul>
+<hr />
+<h2 id="8">8. 알아둘 점</h2>
+<ul>
+<li>로컬과 배포의 차이는 <strong>백엔드 URL</strong>뿐 (<code>VITE_API_URL</code>). 로컬은 Vite 프록시가 <code>/api</code>를 <code>localhost:8000</code>으로 흘려보냄.</li>
+<li>외부 시스템 의존성: Gemini (필수), Atlassian (선택 — 내보내기 경로가 대안).</li>
+</ul>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose' });
+</script>
+</body>
+</html>

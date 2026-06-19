@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>ERD — 데이터 모델</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root {
+  --fg: #0f172a; --muted: #64748b; --border: #e2e8f0; --bg: #ffffff;
+  --code-bg: #f8fafc; --primary: #2563eb; --accent: #f1f5f9;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 0; background: var(--bg); color: var(--fg);
+  font-family: -apple-system, "Segoe UI", "Noto Sans KR", sans-serif;
+  line-height: 1.65; font-size: 16px;
+}
+.container { max-width: 880px; margin: 0 auto; padding: 48px 24px 80px; }
+header.docnav {
+  background: var(--accent); border-bottom: 1px solid var(--border);
+  padding: 12px 24px; display: flex; gap: 16px; align-items: center;
+  font-size: 0.9rem;
+}
+header.docnav a { color: var(--primary); text-decoration: none; }
+header.docnav a:hover { text-decoration: underline; }
+header.docnav strong { color: var(--fg); }
+h1 { font-size: 2rem; margin: 0 0 8px; border-bottom: 2px solid var(--border); padding-bottom: 12px; }
+h2 { font-size: 1.45rem; margin: 40px 0 12px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+h3 { font-size: 1.1rem; margin: 28px 0 8px; }
+h4 { font-size: 1rem; margin: 20px 0 6px; }
+p { margin: 8px 0; }
+ul, ol { padding-left: 24px; }
+li { margin: 4px 0; }
+hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+pre {
+  background: var(--code-bg); padding: 14px 16px; border-radius: 8px;
+  overflow-x: auto; border: 1px solid var(--border);
+}
+pre code { background: transparent; padding: 0; }
+blockquote {
+  border-left: 4px solid var(--primary); padding: 4px 16px;
+  background: var(--accent); margin: 12px 0; color: var(--muted);
+}
+table {
+  border-collapse: collapse; width: 100%; margin: 12px 0;
+  font-size: 0.95em;
+}
+th, td {
+  border: 1px solid var(--border); padding: 8px 12px; text-align: left;
+  vertical-align: top;
+}
+th { background: var(--accent); font-weight: 600; }
+a { color: var(--primary); }
+.mermaid {
+  background: #fff; border: 1px solid var(--border); border-radius: 8px;
+  padding: 16px; margin: 16px 0; text-align: center;
+}
+.meta { color: var(--muted); font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<header class="docnav">
+  <strong>📚 meeting-minutes-automation / doc</strong>
+  <a href="index.html">목차</a>
+  <a href="PRD.html">PRD</a>
+  <a href="IA.html">IA</a>
+  <a href="ERD.html">ERD</a>
+</header>
+<div class="container">
+<h1 id="erd-ai">ERD — AI 회의록 자동화</h1>
+<p><strong>문서 버전</strong>: v1.1 (2026-06-19)</p>
+<blockquote>
+<p>이 앱은 <strong>자체 데이터베이스가 없다</strong>. 회의록은 요청 단위로 메모리에서 처리되고 곧바로 외부 시스템(Confluence/Jira) 또는 사용자 다운로드로 흘러간다. 아래는 그 흐름 안에 존재하는 <strong>도메인 모델</strong>과 <strong>외부 시스템 엔티티</strong>의 관계도다.</p>
+</blockquote>
+<hr />
+<h2 id="1">1. 도메인 엔티티 다이어그램</h2>
+<div class="mermaid">erDiagram
+    TRANSCRIPT_FILE ||--o{ UTTERANCE : "파싱"
+    UTTERANCE }o--|| SPEAKER : "발화자"
+    SPEAKER ||--o{ SPEAKER_MAP : "ID→실명"
+
+    UTTERANCE }o--|| MEETING_MINUTES : "AI 입력"
+    MEETING_MINUTES ||--o{ DISCUSSION : "포함"
+    MEETING_MINUTES ||--o{ DECISION : "포함"
+    MEETING_MINUTES ||--o{ ACTION_ITEM : "포함"
+    MEETING_MINUTES ||--o{ REVIEW_ITEM : "포함"
+
+    MEETING_MINUTES ||--o| CONFLUENCE_PAGE : "게시"
+    ACTION_ITEM ||--o| JIRA_ISSUE : "1:1 매핑"
+    JIRA_ISSUE }o--|| JIRA_PROJECT : "속함"
+    CONFLUENCE_PAGE }o--|| CONFLUENCE_SPACE : "속함"
+    ACTION_ITEM }o--o| ATLASSIAN_USER : "담당자"
+
+    TRANSCRIPT_FILE {
+        string file_name
+        bytes raw_bytes
+        string encoding
+    }
+    UTTERANCE {
+        string speaker_id
+        string speaker_name
+        string timestamp
+        int timestamp_seconds
+        string text
+    }
+    SPEAKER {
+        string id
+        string display_name
+    }
+    SPEAKER_MAP {
+        string speaker_id
+        string real_name
+    }
+    MEETING_MINUTES {
+        string title
+        string summary
+        string meeting_date
+        string attendees
+        string next_meeting
+    }
+    DISCUSSION {
+        string topic
+        string content
+    }
+    DECISION {
+        string text
+    }
+    ACTION_ITEM {
+        string id
+        string assignee
+        string task
+        string deadline
+        string confidence
+        string timestamp
+        string source_text
+        string jira_issue_key
+        string jira_url
+    }
+    REVIEW_ITEM {
+        string timestamp
+        string speaker
+        string text
+        string reason
+    }
+    CONFLUENCE_PAGE {
+        string id
+        string title
+        string url
+        string space_key
+        string parent_id
+    }
+    CONFLUENCE_SPACE {
+        string key
+        string name
+        string id
+    }
+    JIRA_ISSUE {
+        string key
+        string url
+        string summary
+        string issue_type
+    }
+    JIRA_PROJECT {
+        string key
+        string name
+        string id
+    }
+    ATLASSIAN_USER {
+        string account_id
+        string display_name
+        string email
+    }</div>
+<hr />
+<h2 id="2">2. 엔티티 정의</h2>
+<h3 id="_1">내부 도메인 엔티티</h3>
+<table>
+<thead>
+<tr>
+<th>엔티티</th>
+<th>정의처(코드)</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>TranscriptFile</strong></td>
+<td>UploadFile (frontend → /api/parse)</td>
+<td>사용자가 업로드한 .txt 파일. 인코딩 자동 감지</td>
+</tr>
+<tr>
+<td><strong>Utterance</strong></td>
+<td><code>text_parser.py:Utterance</code></td>
+<td>한 발화 단위 (화자/시간/내용)</td>
+</tr>
+<tr>
+<td><strong>Speaker</strong></td>
+<td><code>text_parser.get_speakers</code></td>
+<td>전사에 등장한 고유 화자 ID 리스트</td>
+</tr>
+<tr>
+<td><strong>SpeakerMap</strong></td>
+<td><code>WizardState.speakerMap</code></td>
+<td>"1" → "홍길동" 매핑</td>
+</tr>
+<tr>
+<td><strong>MeetingMinutes</strong></td>
+<td><code>claude_processor.MeetingMinutes</code></td>
+<td>AI가 생성한 구조화 회의록 (루트 객체)</td>
+</tr>
+<tr>
+<td><strong>Discussion</strong></td>
+<td><code>MeetingMinutes.discussions[]</code></td>
+<td>토픽 + 내용</td>
+</tr>
+<tr>
+<td><strong>Decision</strong></td>
+<td><code>MeetingMinutes.decisions[]</code> (string)</td>
+<td>결정사항 한 줄</td>
+</tr>
+<tr>
+<td><strong>ActionItem</strong></td>
+<td><code>MeetingMinutes.action_items[]</code></td>
+<td>담당자·업무·기한·신뢰도</td>
+</tr>
+<tr>
+<td><strong>ReviewItem</strong></td>
+<td><code>MeetingMinutes.review_items[]</code></td>
+<td>잡담/불명확 발화 (AI가 분리)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_2">외부 시스템 엔티티 (참조만)</h3>
+<table>
+<thead>
+<tr>
+<th>엔티티</th>
+<th>출처</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ConfluenceSpace</strong></td>
+<td>GET /wiki/api/v2/spaces</td>
+</tr>
+<tr>
+<td><strong>ConfluencePage</strong></td>
+<td>POST /wiki/api/v2/pages (회의록 게시 결과)</td>
+</tr>
+<tr>
+<td><strong>JiraProject</strong></td>
+<td>GET /rest/api/3/project</td>
+</tr>
+<tr>
+<td><strong>JiraIssue</strong></td>
+<td>POST /rest/api/3/issue (액션 아이템 1:1 생성)</td>
+</tr>
+<tr>
+<td><strong>AtlassianUser</strong></td>
+<td>GET /rest/api/3/user/assignable/search</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="3">3. 데이터 흐름</h2>
+<div class="mermaid">sequenceDiagram
+    participant U as 사용자
+    participant FE as Frontend (React)
+    participant BE as Backend (FastAPI)
+    participant G as Gemini API
+    participant C as Confluence
+    participant J as Jira
+
+    U->>FE: .txt 업로드
+    FE->>BE: POST /api/parse (file)
+    BE->>BE: read_transcript_bytes (인코딩 감지)
+    BE->>BE: parse_transcript → Utterance[]
+    BE-->>FE: ParseResult (speakers, preview, raw_text)
+
+    U->>FE: 화자 매핑 + 회의일 입력
+    FE->>BE: POST /api/process (raw_text, speaker_map, meeting_date)
+    BE->>BE: 발화 텍스트 결합
+    BE->>G: generate_content (system + prompt)
+    G-->>BE: JSON (회의록)
+    BE-->>FE: MeetingMinutes
+
+    alt 내보내기 경로
+        U->>FE: 마크다운 복사 / .md / .json
+        FE->>FE: minutesToMarkdown → Blob → download
+    else Atlassian 게시 경로
+        U->>FE: 토큰·Space·Project 입력
+        FE->>BE: POST /api/publish
+        BE->>C: HTML 페이지 생성
+        C-->>BE: ConfluencePage
+        loop 각 ActionItem
+            BE->>J: 이슈 생성 또는 댓글 추가
+            J-->>BE: JiraIssue
+        end
+        BE-->>FE: PublishResult (URL들)
+    end</div>
+<hr />
+<h2 id="4">4. 영속성·보존 정책</h2>
+<table>
+<thead>
+<tr>
+<th>데이터</th>
+<th>보존 위치</th>
+<th>보존 기간</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>업로드한 전사 파일</td>
+<td>메모리 (요청 처리 중)</td>
+<td>요청 종료 시 폐기</td>
+</tr>
+<tr>
+<td>MeetingMinutes 결과</td>
+<td>브라우저 (WizardState)</td>
+<td>새로고침/리셋 시 폐기</td>
+</tr>
+<tr>
+<td>사용자 다운로드한 .md / .json</td>
+<td>사용자 로컬</td>
+<td>사용자 관리</td>
+</tr>
+<tr>
+<td>Confluence 페이지 / Jira 이슈</td>
+<td>사용자 Atlassian 워크스페이스</td>
+<td>영구</td>
+</tr>
+<tr>
+<td>API 토큰 (Gemini)</td>
+<td>호스팅 환경변수 (Render)</td>
+<td>운영자 관리</td>
+</tr>
+<tr>
+<td>Atlassian 토큰</td>
+<td>저장 안 함</td>
+<td>매 요청마다 사용자가 입력</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>핵심</strong>: 회의록 본문은 서버에 남지 않는다. 게시하거나 내보내지 않으면 사라진다.</p>
+</blockquote>
+<hr />
+<h2 id="5">5. 관계 카디널리티</h2>
+<table>
+<thead>
+<tr>
+<th>관계</th>
+<th>카디널리티</th>
+<th>비고</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TranscriptFile → Utterance</td>
+<td>1 : N</td>
+<td>보통 수십~수백 개</td>
+</tr>
+<tr>
+<td>MeetingMinutes → Discussion</td>
+<td>1 : N</td>
+<td>보통 3~10 토픽</td>
+</tr>
+<tr>
+<td>MeetingMinutes → ActionItem</td>
+<td>1 : N</td>
+<td>보통 5~20개</td>
+</tr>
+<tr>
+<td>MeetingMinutes → ConfluencePage</td>
+<td>1 : 0..1</td>
+<td>게시 옵션</td>
+</tr>
+<tr>
+<td>ActionItem → JiraIssue</td>
+<td>1 : 0..1</td>
+<td>신뢰도 "확실"만 자동 생성하는 정책 가능</td>
+</tr>
+<tr>
+<td>ActionItem → AtlassianUser</td>
+<td>N : 0..1</td>
+<td>담당자 매핑 시</td>
+</tr>
+<tr>
+<td>JiraProject → JiraIssue</td>
+<td>1 : N</td>
+<td>—</td>
+</tr>
+<tr>
+<td>ConfluenceSpace → ConfluencePage</td>
+<td>1 : N</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose' });
+</script>
+</body>
+</html>

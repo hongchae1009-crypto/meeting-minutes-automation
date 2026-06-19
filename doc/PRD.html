@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>PRD — 제품 요구사항</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root {
+  --fg: #0f172a; --muted: #64748b; --border: #e2e8f0; --bg: #ffffff;
+  --code-bg: #f8fafc; --primary: #2563eb; --accent: #f1f5f9;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 0; background: var(--bg); color: var(--fg);
+  font-family: -apple-system, "Segoe UI", "Noto Sans KR", sans-serif;
+  line-height: 1.65; font-size: 16px;
+}
+.container { max-width: 880px; margin: 0 auto; padding: 48px 24px 80px; }
+header.docnav {
+  background: var(--accent); border-bottom: 1px solid var(--border);
+  padding: 12px 24px; display: flex; gap: 16px; align-items: center;
+  font-size: 0.9rem;
+}
+header.docnav a { color: var(--primary); text-decoration: none; }
+header.docnav a:hover { text-decoration: underline; }
+header.docnav strong { color: var(--fg); }
+h1 { font-size: 2rem; margin: 0 0 8px; border-bottom: 2px solid var(--border); padding-bottom: 12px; }
+h2 { font-size: 1.45rem; margin: 40px 0 12px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+h3 { font-size: 1.1rem; margin: 28px 0 8px; }
+h4 { font-size: 1rem; margin: 20px 0 6px; }
+p { margin: 8px 0; }
+ul, ol { padding-left: 24px; }
+li { margin: 4px 0; }
+hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+pre {
+  background: var(--code-bg); padding: 14px 16px; border-radius: 8px;
+  overflow-x: auto; border: 1px solid var(--border);
+}
+pre code { background: transparent; padding: 0; }
+blockquote {
+  border-left: 4px solid var(--primary); padding: 4px 16px;
+  background: var(--accent); margin: 12px 0; color: var(--muted);
+}
+table {
+  border-collapse: collapse; width: 100%; margin: 12px 0;
+  font-size: 0.95em;
+}
+th, td {
+  border: 1px solid var(--border); padding: 8px 12px; text-align: left;
+  vertical-align: top;
+}
+th { background: var(--accent); font-weight: 600; }
+a { color: var(--primary); }
+.mermaid {
+  background: #fff; border: 1px solid var(--border); border-radius: 8px;
+  padding: 16px; margin: 16px 0; text-align: center;
+}
+.meta { color: var(--muted); font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<header class="docnav">
+  <strong>📚 meeting-minutes-automation / doc</strong>
+  <a href="index.html">목차</a>
+  <a href="PRD.html">PRD</a>
+  <a href="IA.html">IA</a>
+  <a href="ERD.html">ERD</a>
+</header>
+<div class="container">
+<h1 id="prd-ai">PRD — AI 회의록 자동화</h1>
+<p><strong>문서 버전</strong>: v1.1 (2026-06-19)
+<strong>프로덕트</strong>: meeting-minutes-automation
+<strong>저장소</strong>: https://github.com/hongchae1009-crypto/meeting-minutes-automation
+<strong>배포 URL</strong>: https://meeting-minutes-automation-r2yu.vercel.app</p>
+<hr />
+<h2 id="1">1. 배경 &amp; 문제 정의</h2>
+<p>업무 미팅을 끝낸 뒤 사후 정리에 드는 시간이 길다. 음성 전사 도구로 텍스트는 빠르게 얻을 수 있지만, 거기서 다시 회의록 형식으로 다듬고, 결정사항·액션 아이템을 추출해 Confluence·Jira에 옮기는 작업이 반복된다. 이 단계를 AI로 한 번에 처리하고, 사용자는 검토·게시만 하도록 만든다.</p>
+<hr />
+<h2 id="2">2. 목표</h2>
+<ul>
+<li><strong>G1.</strong> 전사 텍스트 1개 → 구조화된 회의록(요약/논의/결정/액션) 자동 생성</li>
+<li><strong>G2.</strong> Confluence 페이지 + Jira 이슈로 한 번에 게시 (옵션)</li>
+<li><strong>G3.</strong> Atlassian 없이도 결과물을 가져갈 수 있는 내보내기 제공</li>
+<li><strong>G4.</strong> 검토 필요 항목(잡담/추정)을 분리해 신뢰성 확보</li>
+</ul>
+<h3 id="_1">비목표</h3>
+<ul>
+<li>음성 → 텍스트 전사 자체는 다루지 않음 (외부 도구 결과를 입력으로 받음)</li>
+<li>다국어 회의록 (한국어 전사 우선)</li>
+<li>실시간 회의록 (사후 일괄 처리 방식)</li>
+</ul>
+<hr />
+<h2 id="3">3. 사용자</h2>
+<table>
+<thead>
+<tr>
+<th>페르소나</th>
+<th>사용 시나리오</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>PM / 팀장</strong></td>
+<td>위클리 미팅 후 결정사항·할 일을 Confluence·Jira에 정리</td>
+</tr>
+<tr>
+<td><strong>연구원 / 엔지니어</strong></td>
+<td>기술 회의록 작성 후 노션·문서로 옮기기 (Atlassian 미사용 → 내보내기)</td>
+</tr>
+<tr>
+<td><strong>외부 미팅 진행자</strong></td>
+<td>고객 미팅 후 액션 아이템만 추출해서 슬랙·메일에 공유</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="4">4. 기능 요구사항</h2>
+<h3 id="41-5">4.1 5단계 마법사</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>화면</th>
+<th>핵심 동작</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>파일 업로드</td>
+<td><code>.txt</code> 전사 파일 업로드 → 화자 목록 추출</td>
+</tr>
+<tr>
+<td>2</td>
+<td>화자 매핑</td>
+<td>"화자 1" → "홍길동" 매핑, 회의일·참석자 입력</td>
+</tr>
+<tr>
+<td>3</td>
+<td>AI 처리</td>
+<td>Gemini로 회의록 생성 → 미리보기/편집 + <strong>내보내기</strong></td>
+</tr>
+<tr>
+<td>4</td>
+<td>게시 설정</td>
+<td>Confluence Space·Jira Project 선택, 토큰 입력</td>
+</tr>
+<tr>
+<td>5</td>
+<td>완료</td>
+<td>Confluence 페이지·Jira 이슈 링크 표시</td>
+</tr>
+</tbody>
+</table>
+<h3 id="42">4.2 전사 파일 입력 형식</h3>
+<ul>
+<li>인코딩: UTF-8, UTF-16 (BE/LE), CP949 자동 감지</li>
+<li>패턴: <code>화자 N (MM:SS)</code> 라인 + 다음 줄에 발화 내용</li>
+<li>"화자" 한글 문자열이 본문에 반드시 포함</li>
+</ul>
+<h3 id="43-ai">4.3 AI 생성 결과 구조</h3>
+<ul>
+<li><strong>제목</strong> (자동 추론, 편집 가능)</li>
+<li><strong>요약</strong> (한 단락)</li>
+<li><strong>주요 논의</strong> (토픽별 묶음)</li>
+<li><strong>결정사항</strong> (리스트)</li>
+<li><strong>액션 아이템</strong> (담당자/업무/기한/신뢰도 — <code>확실</code>/<code>추정</code>)</li>
+<li><strong>검토 필요 항목</strong> (시간/화자/발화/이유 — 잡담·불명확 발화)</li>
+<li><strong>다음 회의 일정</strong></li>
+</ul>
+<h3 id="44-v11">4.4 내보내기 (v1.1 추가)</h3>
+<p>Step 3에서 게시 단계를 거치지 않고 결과물을 가져갈 수 있다.</p>
+<ul>
+<li><strong>📋 마크다운 복사</strong>: 클립보드에 회의록 전체를 마크다운으로</li>
+<li><strong>⬇ Markdown (.md)</strong>: 파일 다운로드</li>
+<li><strong>⬇ JSON (.json)</strong>: 데이터 보존용 (재처리·재활용)</li>
+</ul>
+<h3 id="45-atlassian">4.5 Atlassian 연동</h3>
+<ul>
+<li><strong>Confluence</strong>: Space 선택 → 회의록 HTML 페이지 생성 (선택적 부모 페이지)</li>
+<li><strong>Jira</strong>: 프로젝트 선택, Issue Type 지정, 담당자 매핑 (displayName → accountId)</li>
+<li><strong>댓글 추가</strong>: 기존 이슈 키 입력 시 신규 생성 대신 댓글로 액션 아이템 추가</li>
+<li><strong>인증</strong>: Atlassian API 토큰 (사용자가 화면에서 직접 입력)</li>
+</ul>
+<hr />
+<h2 id="5">5. 비기능 요구사항</h2>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>기준</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>응답 시간</strong></td>
+<td>60분 전사 기준 AI 처리 30–60초</td>
+</tr>
+<tr>
+<td><strong>보안</strong></td>
+<td>API 토큰은 서버 환경변수만, Atlassian 토큰은 사용자가 매번 입력 (저장 안 함)</td>
+</tr>
+<tr>
+<td><strong>CORS</strong></td>
+<td><code>*</code> 허용 (프론트가 어디서든 호출 가능)</td>
+</tr>
+<tr>
+<td><strong>무료 운영</strong></td>
+<td>Vercel Hobby + Render Free + Gemini 무료 티어</td>
+</tr>
+<tr>
+<td><strong>인코딩</strong></td>
+<td>UTF-16/UTF-8/CP949 자동 감지</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="6">6. 기술 스택</h2>
+<table>
+<thead>
+<tr>
+<th>영역</th>
+<th>스택</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Backend</strong></td>
+<td>FastAPI · Python 3.x · uvicorn</td>
+</tr>
+<tr>
+<td><strong>AI</strong></td>
+<td>Google Gemini 2.5 Flash (1차) / Anthropic Claude (대체)</td>
+</tr>
+<tr>
+<td><strong>Frontend</strong></td>
+<td>React 18 · Vite · TypeScript · axios</td>
+</tr>
+<tr>
+<td><strong>외부</strong></td>
+<td>Atlassian Confluence/Jira REST API</td>
+</tr>
+<tr>
+<td><strong>호스팅</strong></td>
+<td>Render (backend) · Vercel (frontend)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="7">7. 성공 지표</h2>
+<ul>
+<li>마법사 5단계 완주율 ≥ 70%</li>
+<li>회의록 1건당 사용자 편집 횟수 평균 ≤ 5회 (= AI 결과의 1차 품질)</li>
+<li>액션 아이템 "확실" 비율 ≥ 60%</li>
+<li>내보내기 사용률 (게시 미사용 사용자 비율) — Atlassian 미보유 사용자 수용 지표</li>
+</ul>
+<hr />
+<h2 id="8">8. 로드맵</h2>
+<table>
+<thead>
+<tr>
+<th>버전</th>
+<th>시점</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>v1.0</td>
+<td>2026-05</td>
+<td>로컬 실행 (start.bat), Atlassian 게시</td>
+</tr>
+<tr>
+<td><strong>v1.1</strong></td>
+<td><strong>2026-06</strong></td>
+<td><strong>Render+Vercel 배포, 내보내기 기능</strong></td>
+</tr>
+<tr>
+<td>v1.2 (계획)</td>
+<td>—</td>
+<td>DOCX/PDF 내보내기, 회의록 히스토리(DB)</td>
+</tr>
+<tr>
+<td>v1.3 (계획)</td>
+<td>—</td>
+<td>음성 파일 직접 입력 (Whisper API 연동)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose' });
+</script>
+</body>
+</html>
